@@ -1,0 +1,45 @@
+<input type="file" id="csvFile" accept=".csv" />
+<button onclick="exportTable()">Export to CSV</button>
+<table id="csvTable"></table>
+<script>
+function csvToTable(csv) {
+    let rows = csv.split('\n').map(line => line.split(','));
+    let table = document.getElementById('csvTable');
+    table.innerHTML = '';
+    rows.forEach((row, rIdx) => {
+        let tr = document.createElement('tr');
+        row.forEach((col, cIdx) => {
+            let cell = rIdx === 0 ? document.createElement('th') : document.createElement('td');
+            cell.contentEditable = true; // Enable inline editing
+            cell.textContent = col;
+            tr.appendChild(cell);
+        });
+        table.appendChild(tr);
+    });
+}
+document.getElementById('csvFile').addEventListener('change', function(e) {
+    let file = e.target.files[0];
+    let reader = new FileReader();
+    reader.onload = function(ev) {
+        csvToTable(ev.target.result);
+    };
+    reader.readAsText(file);
+});
+function exportTable() {
+    let table = document.getElementById('csvTable');
+    let csv = [];
+    for(let row of table.rows){
+        let cols = [];
+        for(let cell of row.cells){
+            cols.push('"' + cell.textContent.replace(/"/g,'""') + '"');
+        }
+        csv.push(cols.join(','));
+    }
+    let csvContent = csv.join('\n');
+    let blob = new Blob([csvContent], { type: 'text/csv' });
+    let link = document.createElement('a');
+    link.href = window.URL.createObjectURL(blob);
+    link.download = 'export.csv';
+    link.click();
+}
+</script>
