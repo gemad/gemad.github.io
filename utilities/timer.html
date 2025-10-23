@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Adjustable Timer</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background: #f8f9fa;
+    padding: 40px;
+  }
+  h1 { color: #333; }
+  #timer { font-size: 3em; margin: 20px 0; }
+  button {
+    margin: 5px;
+    padding: 10px 20px;
+    font-size: 1em;
+    cursor: pointer;
+  }
+  select, input {
+    font-size: 1em;
+    padding: 5px;
+    margin: 5px;
+  }
+  #enableSoundBtn {
+    background: #28a745; color: white; border: none;
+    border-radius: 5px;
+  }
+</style>
+</head>
+<body>
+
+<h1>Adjustable Timer</h1>
+
+<div id="timer">00:00</div>
+
+<!-- Sound permission button -->
+<button id="enableSoundBtn">🔊 Enable Sound</button>
+
+<br><br>
+
+<label for="preset">Preset time:</label>
+<select id="preset">
+  <option value="0">-- Select --</option>
+  <option value="60">1 minute</option>
+  <option value="300">5 minutes</option>
+  <option value="600">10 minutes</option>
+  <option value="900">15 minutes</option>
+</select>
+
+<p>Or enter custom time:</p>
+<input type="number" id="customMin" min="0" placeholder="Minutes" style="width:80px;"> :
+<input type="number" id="customSec" min="0" max="59" placeholder="Seconds" style="width:80px;">
+
+<br><br>
+<button id="startBtn">Start</button>
+<button id="pauseBtn">Pause</button>
+<button id="resetBtn">Reset</button>
+
+<script>
+let timer;
+let remaining = 0;
+let running = false;
+let soundEnabled = false;
+
+const display = document.getElementById('timer');
+const preset = document.getElementById('preset');
+const customMin = document.getElementById('customMin');
+const customSec = document.getElementById('customSec');
+const startBtn = document.getElementById('startBtn');
+const pauseBtn = document.getElementById('pauseBtn');
+const resetBtn = document.getElementById('resetBtn');
+const enableSoundBtn = document.getElementById('enableSoundBtn');
+
+// Gentle bell (Pixabay free)
+const bell = new Audio("https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg");
+bell.preload = "auto";
+
+// Let the user unlock audio
+enableSoundBtn.addEventListener('click', () => {
+  bell.play().then(() => {
+    bell.pause();
+    bell.currentTime = 0;
+    soundEnabled = true;
+    enableSoundBtn.style.display = "none";
+    alert("Sound enabled — your timer will chime now!");
+  }).catch(() => {
+    alert("Click the button again to enable sound (browser blocked it once).");
+  });
+});
+
+function updateDisplay() {
+  const minutes = Math.floor(remaining / 60);
+  const seconds = remaining % 60;
+  display.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
+
+function startTimer() {
+  if (running) return;
+
+  if (remaining <= 0) {
+    const presetValue = parseInt(preset.value);
+    const min = parseInt(customMin.value) || 0;
+    const sec = parseInt(customSec.value) || 0;
+    const customValue = min * 60 + sec;
+    if (customValue > 0) remaining = customValue;
+    else if (presetValue > 0) remaining = presetValue;
+    else return alert('Please select or enter a time!');
+  }
+
+  running = true;
+  updateDisplay();
+
+  timer = setInterval(() => {
+    if (remaining > 0) {
+      remaining--;
+      updateDisplay();
+    } else {
+      clearInterval(timer);
+      running = false;
+      updateDisplay();
+      if (soundEnabled) {
+        bell.currentTime = 0;
+        bell.play();
+      } else {
+        alert("⏰ Time is up!");
+      }
+    }
+  }, 1000);
+}
+
+function pauseTimer() {
+  clearInterval(timer);
+  running = false;
+}
+
+function resetTimer() {
+  clearInterval(timer);
+  running = false;
+  remaining = 0;
+  updateDisplay();
+}
+
+startBtn.addEventListener('click', startTimer);
+pauseBtn.addEventListener('click', pauseTimer);
+resetBtn.addEventListener('click', resetTimer);
+
+updateDisplay();
+</script>
+
+</body>
+</html>
